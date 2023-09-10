@@ -32,6 +32,10 @@ pub trait OpenRGBReadableStream: AsyncReadExt + Sized + Send + Sync + Unpin {
 
         let packet_id = self.read_value::<PacketId>(protocol).await?;
         if packet_id != expected_packet_id {
+            if (packet_id == PacketId::DeviceListUpdated) {
+                self.read_value::<u32>(protocol).await?;
+                return self.read_header(protocol, expected_device_id, expected_packet_id).await;
+            }
             return Err(ProtocolError(format!("expected packet ID {:?}, got {:?}", expected_packet_id, packet_id)));
         }
 
